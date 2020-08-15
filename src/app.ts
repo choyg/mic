@@ -1,14 +1,24 @@
-import { spawn } from "child_process";
+import { ChildProcessWithoutNullStreams, spawn } from "child_process";
 import * as fs from "fs";
 import * as path from "path";
 import { SSLApp } from "uWebSockets.js";
 
-const ffplay = spawn("ffplay", ["-nodisp", "-"]);
-ffplay.on("close", () => {
-  console.log("ffplay closed");
-});
-ffplay.on("error", (err) => console.error(err));
-ffplay.on("message", (message) => console.log(message));
+let ffplay: ChildProcessWithoutNullStreams;
+const startFfplay = () => {
+  // https://ffmpeg.org/ffplay.html
+  // Set loglevel to 8: 'Only show fatal errors. These are errors after which the process absolutely cannot continue.'
+  // Automatically respawns after a fatal error
+  ffplay = spawn("ffplay", ["-nodisp", "-loglevel", "8", "-"]);
+  ffplay.on("close", () => {
+    startFfplay();
+  });
+  ffplay.stderr.on("data", (data) => {
+    process.stdout.write(data);
+    ffplay.kill("SIGABRT");
+  });
+};
+
+startFfplay();
 
 SSLApp({
   key_file_name: "key.pem",
