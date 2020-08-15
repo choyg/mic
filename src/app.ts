@@ -20,6 +20,9 @@ const startFfplay = () => {
 
 startFfplay();
 
+// Must be SSL because 'mic' device will not connect on localhost
+// Browsers will reject unencrypted connection when requesting mic permission
+// https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia#Security
 SSLApp({
   key_file_name: "key.pem",
   cert_file_name: "cert.pem",
